@@ -145,6 +145,14 @@ Shader "Hidden/Frag"
                 return closest;
             }
 
+
+            /* Taken from : https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
+              - When a ray hits an object, emissive*throughput is added to the pixel’s color.
+              - When a ray hits an object, the throughput is multiplied by the object’s albedo, which affects the color of future emissive lights.
+              - When a ray hits an object, a ray will be reflected in a random direction and the ray will continue
+                * I have chosen to use a normal distribution for calculating my random directions. This is a poor lambertian lighting system.
+              - We will terminate when a ray misses all objects, or when N ray bounces have been reached. 
+            */
             float3 Trace(Ray ray, inout uint state) {
                 float3 incomingLight = 0;
                 float3 rayCol = 1;
@@ -158,6 +166,7 @@ Shader "Hidden/Frag"
 
                         Material mat = hit.material;
                         float3 emittedLight = mat.emission.xyz * mat.emission.w;
+
                         incomingLight += emittedLight * rayCol;
                         rayCol *= mat.color;
                     } else {

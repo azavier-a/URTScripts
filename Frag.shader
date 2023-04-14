@@ -2,12 +2,10 @@ Shader "Hidden/Frag"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Texture", 2D) = "black" {}
     }
     SubShader
     {
-        // No culling or depth
-        Cull Off ZWrite Off ZTest Always
 
         Pass
         {
@@ -43,7 +41,8 @@ Shader "Hidden/Frag"
             float4x4 CamLocalToWorldMatrix;
             int MaxBounces;
             int SamplesPerPixel;
-            int Frame   ;
+            int Frame;
+            bool UseProgressiveRendering;
 
             struct Ray {
                 float3 o;
@@ -84,7 +83,6 @@ Shader "Hidden/Frag"
                 
                 return rho*cos(theta);
             }
-
             float3 RandomDirection(inout uint state) {
                 float x = RandomValueNormalDist(state);
                 float y = RandomValueNormalDist(state);
@@ -92,7 +90,6 @@ Shader "Hidden/Frag"
 
                 return normalize(float3(x,y,z));
             }
-
             float3 RandomHemisphere(float3 n, inout uint state) {
                 float3 dir = RandomDirection(state);
 
@@ -150,7 +147,7 @@ Shader "Hidden/Frag"
               - When a ray hits an object, emissive*throughput is added to the pixel’s color.
               - When a ray hits an object, the throughput is multiplied by the object’s albedo, which affects the color of future emissive lights.
               - When a ray hits an object, a ray will be reflected in a random direction and the ray will continue
-                * I have chosen to use a normal distribution for calculating my random directions. This is a poor lambertian lighting system.
+                * I have chosen to use a normal distribution for calculating my random directions.
               - We will terminate when a ray misses all objects, or when N ray bounces have been reached. 
             */
             float3 Trace(Ray ray, inout uint state) {
@@ -162,7 +159,7 @@ Shader "Hidden/Frag"
 
                     if(hit.did) {
                         ray.o = hit.p;
-                        ray.d = RandomHemisphere(hit.n, state);
+                        ray.d = normalize(hit.n + RandomDirection(state)); // Cosine weighted normal distribution normal random direction
 
                         Material mat = hit.material;
                         float3 emittedLight = mat.emission.xyz * mat.emission.w;
@@ -192,13 +189,27 @@ Shader "Hidden/Frag"
                 ray.d = normalize(vpWorld - ray.o);
 
                 float3 totalIncominglight = 0;
-
-                for(int rayInd = 0; rayInd < SamplesPerPixel; rayInd++) {
+                for(int rayInd = 0; rayInd < SamplesPerPixel; rayInd++)
                     totalIncominglight += Trace(ray, rngState);
-                }
 
-                float3 pixelColor = totalIncominglight / SamplesPerPixel;
-                return float4(pixelColor, 1);
+                float3 newPixelColor = totalIncominglight / SamplesPerPixel; 
+
+                if(UseProgressiveRendering) {
+                    float3 oldPixelColor = tex2D(_MainTex, i.uv).rgb;
+
+                    float w = 1.0 / Frame;
+                    // linearly interpolate between the last frame and the current.
+                    // frame 1: old*0      + new*1
+                    // frame 2: old*0.5    + new*0.5
+                    // frame 3: old*0.6667 + new*0.333
+                    // frame 4: old*0.75   + new*0.25
+                    // frame 5: old*0.8    + new*0.2
+                    // frame 6: old*0.833  + new*0.1667
+                    // and so on. this means that over time new frames will contribute less and less.
+                    // this is equivalent to lerp(oldPixelcolor, newPixelColor, 1.0 / Frame)
+                    return float4(oldPixelColor*(1 - w) + newPixelColor*w, 1);
+                }
+                return float4(newPixelColor, 1);
             }
             ENDCG
         }

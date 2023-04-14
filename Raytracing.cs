@@ -1,3 +1,4 @@
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,14 +6,12 @@ using UnityEngine;
 [ExecuteAlways, ImageEffectAllowedInSceneView]
 public class Raytracing : MonoBehaviour
 {
-    [SerializeField] int maxBounces = 1;
-    [SerializeField] int samples = 1;
-    [SerializeField] bool useShaderInSceneView;
+    [SerializeField] int maxBounces = 3;
+    [SerializeField] int samples = 2;
+    [SerializeField] bool useShaderInSceneView = false;
+    [SerializeField] bool useProgressiveRendering = false;
     [SerializeField] Shader rayTracingShader;
-    [SerializeField] Shader framestackingShader;
-    [SerializeField] GameObject sphereHolder;
     Material rayTracingMaterial;
-    Material framestackingMaterial;
 
     GameObject[] GetChildren(GameObject obj)
     {
@@ -26,7 +25,16 @@ public class Raytracing : MonoBehaviour
         return children.ToArray();
     }
 
-    RenderTexture frameOld;
+    Texture2D RenderTextureToTexture2D(RenderTexture rtex)
+    {
+        Texture2D tex = new Texture2D(rtex.width, rtex.height, TextureFormat.RGB24, false);
+        RenderTexture.active = rtex;
+        tex.ReadPixels(new Rect(0, 0, rtex.width, rtex.height), 0, 0);
+        tex.Apply();
+        return tex;
+    }
+
+    Texture2D frameOld;
     GraphicsBuffer buffer;
 
     int NumRenderedFrames = 0;
@@ -35,37 +43,29 @@ public class Raytracing : MonoBehaviour
     bool clr = false;
     void OnRenderImage(RenderTexture source, RenderTexture target)
     {
+        if(!rayTracingMaterial)
+            rayTracingMaterial = new Material(rayTracingShader);
+
         Camera cam = Camera.current;
         if(cam.name != "SceneCamera" || useShaderInSceneView)
         {
             clr = true;
-            if (!frameOld || !framestackingMaterial || !rayTracingMaterial)
-            {
-                frameOld = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0);
-                rayTracingMaterial = new Material(rayTracingShader);
-                framestackingMaterial = new Material(framestackingShader);
-            }
-            else
-                framestackingMaterial.SetTexture("TextureOld", frameOld);
 
+            NumRenderedFrames++;
             UpdateCameraParams(cam);
 
-            RenderTexture frameNew = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0);
-            // Render a new frame into frameNew
+            RenderTexture newFrameOld = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0 );
+            if (frameOld)
+                Graphics.Blit(frameOld, newFrameOld, rayTracingMaterial);
+            else
+                Graphics.Blit(null, newFrameOld, rayTracingMaterial);
 
-            rayTracingMaterial.SetInteger("Frame", NumRenderedFrames+1);
-            Graphics.Blit(null, frameNew, rayTracingMaterial);
-            // Do framestacking and render into frameOld    
-            framestackingMaterial.SetInteger("NumRenderedFrames", NumRenderedFrames);
-            Graphics.Blit(frameNew, frameOld, framestackingMaterial);
-            // Blit frameOld into the target texture
+            frameOld = RenderTextureToTexture2D(newFrameOld);
             Graphics.Blit(frameOld, target);
-            NumRenderedFrames++;
-        } else
-        {
+            newFrameOld.Release();
+        } 
+        else
             Graphics.Blit(source, target);
-        }
-
         if (clr)
         {
             buffer.Release();
@@ -86,6 +86,7 @@ public class Raytracing : MonoBehaviour
         public MaterialData material;
     }
 
+    bool wasProgressiveLastFrame = false;
     void UpdateCameraParams(Camera cam)
     {
 
@@ -126,9 +127,16 @@ public class Raytracing : MonoBehaviour
         rayTracingMaterial.SetMatrix("CamLocalToWorldMatrix", cam.transform.localToWorldMatrix);
         rayTracingMaterial.SetVector("ViewParams", new Vector3(planeW, planeH, cam.nearClipPlane));
 
+        rayTracingMaterial.SetInteger("Frame", NumRenderedFrames);
         rayTracingMaterial.SetInteger("NumSpheres", spheres.Length);
         rayTracingMaterial.SetInteger("MaxBounces", maxBounces);
         rayTracingMaterial.SetInteger("SamplesPerPixel", samples);
+
+        if(useProgressiveRendering && !wasProgressiveLastFrame)
+            NumRenderedFrames = 0;
+
+        rayTracingMaterial.SetInteger("UseProgressiveRendering", useProgressiveRendering ? 1 : 0);
+        wasProgressiveLastFrame = useProgressiveRendering;
 
         rayTracingMaterial.SetBuffer("SpheresBuffer", buffer);
     }

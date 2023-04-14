@@ -151,7 +151,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 610677463}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2, y: 0.953, z: 0}
+  m_LocalPosition: {x: 1.737, y: 2.276, z: -2.546}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -167,11 +167,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 610677463}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
-    color: {r: 0.65882355, g: 0.024070544, b: 0, a: 0}
+    color: {r: 0.86282957, g: 0.33490568, b: 1, a: 0}
     emissionColor: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 0
 --- !u!135 &610677466
@@ -265,7 +265,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 733028039}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.278, y: 0.497, z: -2.857}
+  m_LocalPosition: {x: -0.974, y: 1.213, z: -2.683}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1.4}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -281,13 +281,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 733028039}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
-    color: {r: 0, g: 0.65882355, b: 0.027836183, a: 0}
-    emissionColor: {r: 0, g: 0, b: 0, a: 0}
-    emissionStrength: 0
+    color: {r: 1, g: 1, b: 1, a: 0}
+    emissionColor: {r: 0.087086126, g: 0.9716981, b: 0.9716981, a: 0}
+    emissionStrength: 8
 --- !u!135 &733028042
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -515,15 +515,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9bce3961f5d43cf46850eb83aef07d61, type: 3}
+  m_Script: {fileID: 11500000, guid: 8974c1c3cfbf4014dbf1d1fffa12183a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxBounces: 30
-  samples: 100
+  maxBounces: 25
+  samples: 15
   useShaderInSceneView: 1
-  rayTracingShader: {fileID: 4800000, guid: c21b1b99a3f1b574d9c658d7e221a629, type: 3}
-  framestackingShader: {fileID: 4800000, guid: 0bbfea21efb8ab744882e567d2d41a24, type: 3}
-  sphereHolder: {fileID: 772468779}
+  useProgressiveRendering: 1
+  rayTracingShader: {fileID: 4800000, guid: d85f9c857ed33884baa6499563a8b020, type: 3}
 --- !u!1 &1065376236
 GameObject:
   m_ObjectHideFlags: 0
@@ -631,12 +630,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1065376236}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
-    color: {r: 0.36850426, g: 0.08085619, b: 0.745283, a: 0}
-    emissionColor: {r: 1, g: 1, b: 1, a: 0}
+    color: {r: 0.7264151, g: 0.22957456, b: 0.22957456, a: 0}
+    emissionColor: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 0
 --- !u!1 &1243444742
 GameObject:
@@ -666,7 +665,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1243444742}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.11, y: 0.746, z: -1.2}
+  m_LocalPosition: {x: -1.188, y: 0.746, z: -0.473}
   m_LocalScale: {x: 1.6, y: 1.6, z: 1.6}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -682,12 +681,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1243444742}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
-    color: {r: 1, g: 0.8534628, b: 0, a: 0}
-    emissionColor: {r: 0.5377358, g: 0.42386237, b: 0, a: 0}
+    color: {r: 1, g: 0.11792451, b: 0.51269937, a: 0}
+    emissionColor: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 0
 --- !u!135 &1243444745
 SphereCollider:
@@ -796,11 +795,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1332111105}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
-    color: {r: 0, g: 0.39111993, b: 0.65882355, a: 0}
+    color: {r: 1, g: 1, b: 1, a: 0}
     emissionColor: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 0
 --- !u!135 &1332111108
@@ -894,7 +893,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1389150401}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.16, y: 0.9, z: -0.21}
+  m_LocalPosition: {x: 0.98, y: 0.524, z: -1.35}
   m_LocalScale: {x: 1.8, y: 1.8, z: 1.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -910,11 +909,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1389150401}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
-    color: {r: 1, g: 0.42438906, b: 0, a: 0}
+    color: {r: 0.34663337, g: 0.3254717, b: 1, a: 0}
     emissionColor: {r: 0, g: 0, b: 0, a: 0}
     emissionStrength: 0
 --- !u!135 &1389150404
@@ -1087,10 +1086,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1763369587}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b19c4dbb06980545ae3dc305cec4495, type: 3}
+  m_Script: {fileID: 11500000, guid: d8a29c5a8c90e14469b5070772ec392f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Material:
     color: {r: 0, g: 0, b: 0, a: 0}
-    emissionColor: {r: 0.6886792, g: 0.5940259, b: 0.26962438, a: 0}
+    emissionColor: {r: 0.9811321, g: 0.8763394, b: 0.5784977, a: 0}
     emissionStrength: 2

@@ -42,6 +42,7 @@ Shader "Hidden/Frag"
             int MaxBounces;
             int SamplesPerPixel;
             int Frame;
+            int Time;
             bool UseProgressiveRendering;
 
             struct Ray {
@@ -142,7 +143,34 @@ Shader "Hidden/Frag"
                 return closest;
             }
 
+            float2x2 rot(float a) {
+                float c = cos(a), s = sin(a);
+                return float2x2(c, -s, s, c);
+            }
+            float3 GetEnv(float3 dir) {
+                float3 sunp = normalize(float3(0.7,0.5,-1));
+                sunp.yx = mul(sunp.yx, rot(Time*0.02));
 
+                float3 skyc = lerp(float3(1.,0.82,0.21), float3(0.15,0.5,0.9), smoothstep(0.05, 0.3, sunp.y));
+                skyc = lerp(float3(0.08,0.19,0.32), skyc, smoothstep(-0.2, 0.05, sunp.y));
+                
+                float3 horizon = lerp(float3(1.,0.93,0.29), float3(0.6,0.8,0.9), smoothstep(0.05, 0.3, sunp.y));
+                horizon = lerp(float3(0.31,0.41,0.52), horizon*1.23, smoothstep(-0.1, 0.05, sunp.y));
+  
+                skyc += lerp(0, 3.*horizon, smoothstep(0.995, 1., dot(dir, sunp))); // the sun             
+
+                float3 ground = float3(0.3,0.34,0.4);
+                ground = lerp(ground, float3(0.01,0.14,0.2), -dir.y);
+  
+                //float3 sky = lerp(horizon, skyc, smoothstep(0.04, 0.7, dir.y+sin(dir.y*dir.x*dir.z+Time*0.4)));
+  
+                float3 bg = lerp(ground, skyc, smoothstep(0., 0.015, dir.y));
+  
+                float horizonIntensity = lerp(1.3, 1.9, smoothstep(0.1, 0., sunp.y));
+                bg *= lerp(float3(1,1,1), horizonIntensity*horizon, smoothstep(0.05, 0., abs(dir.y)));
+
+                return bg;
+            }
             /* Taken from : https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
               - When a ray hits an object, emissive*throughput is added to the pixel’s color.
               - When a ray hits an object, the throughput is multiplied by the object’s albedo, which affects the color of future emissive lights.
@@ -167,6 +195,7 @@ Shader "Hidden/Frag"
                         incomingLight += emittedLight * rayCol;
                         rayCol *= mat.color;
                     } else {
+                        incomingLight += GetEnv(ray.d) * rayCol;
                         break;
                     }
                 }

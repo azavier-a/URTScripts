@@ -1,4 +1,4 @@
-
+    
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +6,7 @@ using UnityEngine;
 [ExecuteAlways, ImageEffectAllowedInSceneView]
 public class Raytracing : MonoBehaviour
 {
+    [SerializeField] int time = 0;
     [SerializeField] int maxBounces = 3;
     [SerializeField] int samples = 2;
     [SerializeField] bool useShaderInSceneView = false;
@@ -127,6 +128,7 @@ public class Raytracing : MonoBehaviour
         rayTracingMaterial.SetMatrix("CamLocalToWorldMatrix", cam.transform.localToWorldMatrix);
         rayTracingMaterial.SetVector("ViewParams", new Vector3(planeW, planeH, cam.nearClipPlane));
 
+        rayTracingMaterial.SetInteger("Time", time);
         rayTracingMaterial.SetInteger("Frame", NumRenderedFrames);
         rayTracingMaterial.SetInteger("NumSpheres", spheres.Length);
         rayTracingMaterial.SetInteger("MaxBounces", maxBounces);

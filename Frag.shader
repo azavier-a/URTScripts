@@ -1,4 +1,4 @@
-Shader "Hidden/Frag"
+Shader "Custom/Frag"
 {
     Properties
     {
@@ -37,13 +37,16 @@ Shader "Hidden/Frag"
 
             sampler2D _MainTex;
 
-            float3 ViewParams;
-            float4x4 CamLocalToWorldMatrix;
             int MaxBounces;
             int SamplesPerPixel;
             int Frame;
-            int Time;
+
+            float3 ViewParams;
+            float4x4 CamLocalToWorldMatrix;
             bool UseProgressiveRendering;
+            bool UseBackground;
+            
+            int Time;
 
             struct Ray {
                 float3 o;
@@ -147,9 +150,11 @@ Shader "Hidden/Frag"
                 float c = cos(a), s = sin(a);
                 return float2x2(c, -s, s, c);
             }
-            float3 GetEnv(float3 dir) {
-                float3 sunp = normalize(float3(0.7,0.5,-1));
-                sunp.yx = mul(sunp.yx, rot(Time*0.02));
+            float3 GetBackground(float3 dir) {
+                float3 sunp = _WorldSpaceLightPos0.xyz;
+
+                // float3 sunp = normalize(float3(0.7,0.5,-1));
+                // sunp.yx = mul(sunp.yx, rot(Time*0.02));
 
                 float3 skyc = lerp(float3(1.,0.82,0.21), float3(0.15,0.5,0.9), smoothstep(0.05, 0.3, sunp.y));
                 skyc = lerp(float3(0.08,0.19,0.32), skyc, smoothstep(-0.2, 0.05, sunp.y));
@@ -160,7 +165,7 @@ Shader "Hidden/Frag"
                 skyc += lerp(0, 3.*horizon, smoothstep(0.995, 1., dot(dir, sunp))); // the sun             
 
                 float3 ground = float3(0.3,0.34,0.4);
-                ground = lerp(ground, float3(0.01,0.14,0.2), -dir.y);
+                ground = lerp(ground, float3(0.3,0.3,0.3), -dir.y);
   
                 //float3 sky = lerp(horizon, skyc, smoothstep(0.04, 0.7, dir.y+sin(dir.y*dir.x*dir.z+Time*0.4)));
   
@@ -172,30 +177,48 @@ Shader "Hidden/Frag"
                 return bg;
             }
             /* Taken from : https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
-              - When a ray hits an object, emissive*throughput is added to the pixel’s color.
-              - When a ray hits an object, the throughput is multiplied by the object’s albedo, which affects the color of future emissive lights.
-              - When a ray hits an object, a ray will be reflected in a random direction and the ray will continue
-                * I have chosen to use a normal distribution for calculating my random directions.
-              - We will terminate when a ray misses all objects, or when N ray bounces have been reached. 
+              1. When a ray hits an object, emissive*throughput is added to the pixel’s color.
+              2. When a ray hits an object, the throughput is multiplied by the object’s albedo, which affects the color of received light.
+              3. When a ray hits an object, a ray will be reflected in a random direction and the ray will continue
+               *I have chosen to use a normal distribution to calculate random directions.
+              4. We will terminate when a ray misses all objects, or when N ray bounces have been reached. 
             */
             float3 Trace(Ray ray, inout uint state) {
+                // incomingLight represents the actual color of the pixel, which has information about illumination (using emmissive lighting)
                 float3 incomingLight = 0;
+                // rayCol represents the colors the ray has touched, no information about illumination
                 float3 rayCol = 1;
 
+                // why <= instead of strict <? because this is the ray tracing loop, not the 'bounce' loop.
+                // it dictates the maximum number of times we will trace a ray.
+                // so, for 1 bounce, we want to ray trace 2 times. 
+                // N ray bounces happens after N+1 ray traces.
+
+                // 4. terminate after N bounces.
                 for(int i = 0; i <= MaxBounces; i++) {
                     Hit hit = RayCollisions(ray);
 
                     if(hit.did) {
-                        ray.o = hit.p;
-                        ray.d = normalize(hit.n + RandomDirection(state)); // Cosine weighted normal distribution normal random direction
-
                         Material mat = hit.material;
                         float3 emittedLight = mat.emission.xyz * mat.emission.w;
-
+                        
+                        // 1. when ray hits object, emitted light of object * throughput is added to pixel color
                         incomingLight += emittedLight * rayCol;
+                        // 2. when ray hits object, throughput is multiplied by albedo of object
                         rayCol *= mat.color;
+
+                        // 3. when ray hits object, it's reflected in random direction
+                        ray.d = normalize(hit.n + RandomDirection(state)); // random direction using cosine weighted hemisphere of the surface normal
+                        // 3. and the ray will continue
+                        ray.o = hit.p;
+
+
                     } else {
-                        incomingLight += GetEnv(ray.d) * rayCol;
+                        // this sneaky line adds a backdrop, which conveniently adds ambient lighting
+                        // using the actual color of the background. pretty dope
+                        if(UseBackground)
+                            incomingLight += GetBackground(ray.d) * rayCol;
+                        // 4. terminate if nothing is hit by the ray
                         break;
                     }
                 }
@@ -217,10 +240,20 @@ Shader "Hidden/Frag"
                 ray.o = _WorldSpaceCameraPos;
                 ray.d = normalize(vpWorld - ray.o);
 
+                // calculate the sum of all light samples
                 float3 totalIncominglight = 0;
-                for(int rayInd = 0; rayInd < SamplesPerPixel; rayInd++)
-                    totalIncominglight += Trace(ray, rngState);
+                for(int rayInd = 0; rayInd < SamplesPerPixel; rayInd++) {
+                    Ray modifiedRay;
+                    modifiedRay.o = ray.o;
+                    modifiedRay.d = ray.d + RandomHemisphere(ray.d, rngState)*0.001;
 
+                    totalIncominglight += Trace(modifiedRay, rngState);
+                }
+                // NOTE: the 'trace' function has a slightly misleading name. it does not output a distance along the ray.
+                //  - we ray trace multiple times, once for every bounce. this is path tracing.
+                //  - the trace function returns the total amount of incoming light for a given ray
+
+                // divide by Samples to average all light samples
                 float3 newPixelColor = totalIncominglight / SamplesPerPixel; 
 
                 if(UseProgressiveRendering) {

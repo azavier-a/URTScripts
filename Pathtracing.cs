@@ -4,27 +4,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteAlways, ImageEffectAllowedInSceneView]
-public class Raytracing : MonoBehaviour
+public class Pathtracing : MonoBehaviour
 {
+    [Header("Path Tracing Settings")]
     [SerializeField] int time = 0;
     [SerializeField] int maxBounces = 3;
     [SerializeField] int samples = 2;
     [SerializeField] bool useShaderInSceneView = false;
     [SerializeField] bool useProgressiveRendering = false;
+    [SerializeField] bool alignCameraToSceneView = false;
+    [SerializeField] bool useBackground = true;
     [SerializeField] Shader rayTracingShader;
     Material rayTracingMaterial;
-
-    GameObject[] GetChildren(GameObject obj)
-    {
-        List<GameObject> children = new List<GameObject>();
-
-        for (int i = 0; i < obj.transform.childCount; i++)
-        {
-            children.Add(obj.transform.GetChild(i).gameObject);
-        }
-
-        return children.ToArray();
-    }
 
     Texture2D RenderTextureToTexture2D(RenderTexture rtex)
     {
@@ -35,24 +26,36 @@ public class Raytracing : MonoBehaviour
         return tex;
     }
 
+    GameObject[] GetGameObjectsWithScript<T>() where T : MonoBehaviour
+    {
+        T[] ScriptArray = Object.FindObjectsOfType<T>();
+        GameObject[] ObjectArray = new GameObject[ScriptArray.Length];
+        for (int i = 0; i < ScriptArray.Length; i++)
+            ObjectArray[i] = ScriptArray[i].gameObject;
+
+        return ObjectArray;
+    }
+
     Texture2D frameOld;
     GraphicsBuffer buffer;
 
     int NumRenderedFrames = 0;
 
     // called after a camera finishes rendering into the source texture
-    bool clr = false;
     void OnRenderImage(RenderTexture source, RenderTexture target)
     {
         if(!rayTracingMaterial)
             rayTracingMaterial = new Material(rayTracingShader);
 
         Camera cam = Camera.current;
+        if (alignCameraToSceneView && cam.name == "SceneCamera")
+        {
+            Camera.main.transform.position = cam.transform.position;
+            Camera.main.transform.rotation = cam.transform.rotation;
+        }
+
         if(cam.name != "SceneCamera" || useShaderInSceneView)
         {
-            clr = true;
-
-            NumRenderedFrames++;
             UpdateCameraParams(cam);
 
             RenderTexture newFrameOld = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0 );
@@ -63,15 +66,15 @@ public class Raytracing : MonoBehaviour
 
             frameOld = RenderTextureToTexture2D(newFrameOld);
             Graphics.Blit(frameOld, target);
+            
+            NumRenderedFrames++;
+
             newFrameOld.Release();
+            buffer.Release();
+            buffer.Dispose();
         } 
         else
             Graphics.Blit(source, target);
-        if (clr)
-        {
-            buffer.Release();
-            buffer.Dispose();
-        }
     }
 
     struct MaterialData
@@ -90,9 +93,7 @@ public class Raytracing : MonoBehaviour
     bool wasProgressiveLastFrame = false;
     void UpdateCameraParams(Camera cam)
     {
-
-        GameObject[] spheres = GetChildren(GameObject.Find("Spheres"));
-        
+        GameObject[] spheres = GetGameObjectsWithScript<Sphere>();
 
         buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, spheres.Length, (3*4 + 4) + (4*4 + 4*4));
         SphereData[] bufferData = new SphereData[spheres.Length];
@@ -139,6 +140,7 @@ public class Raytracing : MonoBehaviour
 
         rayTracingMaterial.SetInteger("UseProgressiveRendering", useProgressiveRendering ? 1 : 0);
         wasProgressiveLastFrame = useProgressiveRendering;
+        rayTracingMaterial.SetInteger("UseBackground", useBackground ? 1 : 0);
 
         rayTracingMaterial.SetBuffer("SpheresBuffer", buffer);
     }

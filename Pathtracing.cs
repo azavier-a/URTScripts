@@ -81,6 +81,7 @@ public class Pathtracing : MonoBehaviour
     {
         public float r, g, b, a;
         public float er, eg, eb, es;
+        public float roughness;
     }
 
     unsafe struct SphereData
@@ -95,7 +96,7 @@ public class Pathtracing : MonoBehaviour
     {
         GameObject[] spheres = GetGameObjectsWithScript<Sphere>();
 
-        buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, spheres.Length, (3*4 + 4) + (4*4 + 4*4));
+        buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, spheres.Length, (3*4 + 4) + (4*4 + 4*4 + 4));
         SphereData[] bufferData = new SphereData[spheres.Length];
         unsafe
         {
@@ -119,6 +120,7 @@ public class Pathtracing : MonoBehaviour
                 bufferData[i].material.eg = mat[5];
                 bufferData[i].material.eb = mat[6];
                 bufferData[i].material.es = mat[7];
+                bufferData[i].material.roughness = mat[8];
             }
             buffer.SetData(bufferData);
         }

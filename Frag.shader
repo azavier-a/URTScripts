@@ -56,6 +56,7 @@ Shader "Custom/Frag"
             struct Material {
                 float4 color;
                 float4 emission;
+                float roughness;
             };
 
             struct Hit {
@@ -208,7 +209,11 @@ Shader "Custom/Frag"
                         rayCol *= mat.color;
 
                         // 3. when ray hits object, it's reflected in random direction
-                        ray.d = normalize(hit.n + RandomDirection(state)); // random direction using cosine weighted hemisphere of the surface normal
+                        float3 diffuseDir = normalize(hit.n + RandomDirection(state)); // random direction using cosine weighted hemisphere of the surface normal
+                        
+                        float3 specularDir = reflect(ray.d, hit.n);
+
+                        ray.d = lerp(specularDir, diffuseDir, mat.roughness);
                         // 3. and the ray will continue
                         ray.o = hit.p;
 
